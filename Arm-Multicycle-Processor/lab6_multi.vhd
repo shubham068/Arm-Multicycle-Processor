@@ -45,7 +45,7 @@ architecture behavioural of Controller is
             );
     end component;
 
-    type state is (fetch,fetch_1,rdAB,arith,addr,brn,wrRF,wrM,rdM,M2RF,mul);
+    type state is (fetch,fetch_1,fetch_2,rdAB,arith,addr,brn,wrRF,wrM,wrM1,wrM2,rdM,rdM1,rdM2,M2RF,mul);
     signal n_s,c_s:state;
     signal instr_a: std_logic_vector(6 downto 0):=instr(27 downto 21);
     signal instr_b: std_logic_vector(3 downto 0):=instr(31 downto 28);
@@ -97,8 +97,10 @@ architecture behavioural of Controller is
                         mOpc  <= "000";
          ---------------------------------------------------------------------------------
                     when fetch_1=>
+                        n_s<= fetch_2;
+                    when fetch_2=>
                         n_s<= rdAB;
-                        PW<='1';
+                        PW<='1';    
          
          ----------------------------------------------------------------------------------------------               
                     when rdAB =>
@@ -217,14 +219,16 @@ architecture behavioural of Controller is
          -------------------------------------------------------------------------------           
                     when addr =>
                         if(instr(20)='0') then n_s <= wrM;
-                        else n_s <= rdM;
+                        else 
+                            n_s <= rdM;
+                            IorD <='1';
                         end if;
                                         
                         -- PW    <= '1'; 	
                         -- IW    <= '1';
                         -- DW    <= '0';
                         AW    <= '0'; 
-                        BW    <= '0';
+                        BW    <= '1';
         
                         -- Fset <= '0';
                         -- RW   <= '0';
@@ -251,8 +255,12 @@ architecture behavioural of Controller is
                         end if;
                         
         -------------------------------------------------------------------------------            
+                    when wrM1 =>
+                                n_s <= wrM2;
+                    when wrM2 =>
+                                n_s <= fetch;
                     when wrM =>
-                        n_s <= fetch;
+                        n_s <= wrM1;
                                         
                         -- PW    <= '1'; 	
                         -- IW    <= '1';
@@ -262,18 +270,22 @@ architecture behavioural of Controller is
         
                         -- Fset <= '0';
                         -- RW   <= '0';
-                        -- MR   <= '1';
+                        MR   <= '1';
                         MW   <= p;
                         IorD <= '1';	
                         -- Asrc1<= '0';	  
                         -- M2R  <= '0';	    
                         -- Rsrc <= '0';		   
                         -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
-                        
+                        Mopc<="101";
+                        Moff<="11";
                         -- Asrc2 <= "001";	Ssrc  <= "00";
-                    
-                    when rdM => 
+                    when rdM1 => 
+                        n_s <=  rdM2;
+                    when rdM2 => 
                         n_s <=  M2RF;
+                    when rdM => 
+                        n_s <=  rdM1;
                                         
                         -- PW    <= '1'; 	
                         -- IW    <= '1';
