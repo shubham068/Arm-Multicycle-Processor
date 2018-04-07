@@ -36,12 +36,12 @@ end entity Controller;
 
 architecture behavioural of Controller is
 
-    component Actrl is
-        port (
-            instr: in std_logic_vector(6 downto 0);
-            opcode: out std_logic_vector(3 downto 0)
-            );
-    end component;
+    -- component Actrl is
+    --     port (
+    --         instr: in std_logic_vector(6 downto 0);
+    --         opcode: out std_logic_vector(3 downto 0)
+    --         );
+    -- end component;
 
     component Bctrl is
         port (
@@ -62,7 +62,7 @@ architecture behavioural of Controller is
         instr_b<=instr(31 downto 28);
         instr_a<=instr(27 downto 21);
 
-        Acontroller: Actrl port map (instr_a,opcode_out);
+        -- Acontroller: Actrl port map (instr_a,opcode_out);
         Bcontroller: Bctrl port map (instr_b,flag_in,p);
 
 
@@ -74,22 +74,22 @@ architecture behavioural of Controller is
         end Process;
 
 
-        signalGen : Process(c_s,instr)
+        signalGen : Process(c_s,instr,reset)
 
         begin
-        case c_s is
-            when fetch =>
-                n_s  <= rdAB;
-                
-                PW    <= '1'; 	
-                IW    <= '1';
+        
+        if(reset = '1') then   -- Should reset be done at clock edge too ??
+        
+                c_s <= fetch; -- Should it be made n_s instead(because of multidriver errors??)  ?? But then reset occurs at clock cycle.
+                PW    <= '0'; 	
+                IW    <= '0';
                 DW    <= '0';
                 AW    <= '0'; 
                 BW    <= '0';
 
                 Fset <= '0';
                 RW   <= '0';
-                MR   <= '1';
+                MR   <= '0';
                 MW   <= '0';
                 IorD <= '0';	
                 Asrc1<= '0';	  
@@ -98,257 +98,286 @@ architecture behavioural of Controller is
                 SW   <= '0';    Bsrc  <= '0';    Rsrc1  <= '0';  Fsrc <= '0';
                 resW <= '0';
                 
-                Asrc2 <= "001";	Ssrc  <= "00";
-                mOpc  <= "000";
- 
- ----------------------------------------------------------------------------------------------               
-            when rdAB =>
-                if(instr(27 downto 26) = "00") then
-                    if(instr(7 downto 4) = "1001") then n_s <= mul;
-                    else n_s <= arith;
-                    end if;
-                elsif (instr(27 downto 26) = "10") then n_s <= brn;
-                elsif (instr(27 downto 26) = "01") then n_s <= addr;
-                end if;
+                Asrc2 <= "000";	Ssrc  <= "00";
+                mOpc  <= "000"; 
 
-                PW    <= '0'; 	
-                IW    <= '0';
-                -- DW    <= '0';
-                
-                AW    <= '1'; 
-                BW    <= '1';
+        else 
+            case c_s is
+                when fetch =>
+                    n_s  <= rdAB;
+                    
+                    PW    <= '1'; 	
+                    IW    <= '1';
+                    DW    <= '0';
+                    AW    <= '0'; 
+                    BW    <= '0';
 
-                -- Fset <= '0';
-                -- RW   <= '0';
-                MR   <= '0';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                -- Asrc1<= '0';	  
-                -- M2R  <= '0';	    
-                Rsrc <= '0';		   
-                -- Bsrc  <= '0'; 
-                -- Rsrc1 <= '0';  
-               
-                -- Asrc2 <= "001";	Ssrc  <= "00";
-
----------------------------------------------------------------------------                
-
-            when arith =>
-                n_s <= wrRF;
-
-                if(instr(25) = '1') then
-                        rsrc <= '0';
-                        SW   <= '0';
-                        Fsrc <= '0';
-                        -- Immediate
-                else 
-                    if(instr(7)='1' and instr(4)='1') then
-                        if(instr(6 downto 5)="00") then
-                            -- -- MUL/MLA 
-                            -- -- Here Rd,Rn are interchanged?
-                            -- rsrc <= '1';
-                            -- SW   <= '1';
-                            -- Fsrc <= '1';
-                            -- Bsrc <= '1';
-                        else
-                            --Halfword DT/reg offset.
-                            rsrc <= '1';
-                            SW   <= '1';
-                            Fsrc <= '1';
-                            Bsrc <= '0';
+                    Fset <= '0';
+                    RW   <= '0';
+                    MR   <= '1';
+                    MW   <= '0';
+                    IorD <= '0';	
+                    Asrc1<= '0';	  
+                    M2R  <= '0';	    
+                    Rsrc <= '0';		   
+                    SW   <= '0';    Bsrc  <= '0';    Rsrc1  <= '0';  Fsrc <= '0';
+                    resW <= '0';
+                    
+                    Asrc2 <= "001";	Ssrc  <= "00";
+                    mOpc  <= "000";
+    
+    ----------------------------------------------------------------------------------------------               
+                when rdAB =>
+                    if(instr(27 downto 26) = "00") then
+                        if(instr(7 downto 4) = "1001") then n_s <= mul;
+                        else n_s <= arith;
                         end if;
-                    elsif(instr(4)='1') then
-                        --DP SHftammount reg
-                    elsif(instr(4)='0') then
-                        -- " immd
-                    else
-                        --nothing // DP immediate
+                    elsif (instr(27 downto 26) = "10") then n_s <= brn;
+                    elsif (instr(27 downto 26) = "01") then n_s <= addr;
                     end if;
+
+                    PW    <= '0'; 	
+                    IW    <= '0';
+                    -- DW    <= '0';
+                    
+                    AW    <= '1'; 
+                    BW    <= '1';
+
+                    -- Fset <= '0';
+                    -- RW   <= '0';
+                    MR   <= '0';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    -- Asrc1<= '0';	  
+                    -- M2R  <= '0';	    
+                    Rsrc <= '0';		   
+                    -- Bsrc  <= '0'; 
+                    -- Rsrc1 <= '0';  
+                
+                    -- Asrc2 <= "001";	Ssrc  <= "00";
+
+    ---------------------------------------------------------------------------                
+
+                when arith =>
+                    n_s <= wrRF;
+
+                    if(instr(25) = '1') then
+                            rsrc <= '0';
+                            SW   <= '0';
+                            Fsrc <= '0';
+                            -- Immediate
+                    else 
+                        if(instr(7)='1' and instr(4)='1') then
+                            if(instr(6 downto 5)="00") then
+                                -- -- MUL/MLA 
+                                -- -- Here Rd,Rn are interchanged?
+                                -- rsrc <= '1';
+                                -- SW   <= '1';
+                                -- Fsrc <= '1';
+                                -- Bsrc <= '1';
+                            else
+                                --Halfword DT/reg offset.
+                                rsrc <= '1';
+                                SW   <= '1';
+                                Fsrc <= '1';
+                                Bsrc <= '0';
+                            end if;
+                        elsif(instr(4)='1') then
+                            --DP SHftammount reg
+                        elsif(instr(4)='0') then
+                            -- " immd
+                        else
+                            --nothing // DP immediate
+                        end if;
+
+                        
+                    end if;
+                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    AW    <= '0'; 
+                    BW    <= '0';
 
                     
-                end if;
-                
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                AW    <= '0'; 
-                BW    <= '0';
+                    -- RW   <= '0';
+                    -- MR   <= '1';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    Asrc1<= '1';	  
+                    -- M2R  <= '0';	    
+                    -- Rsrc <= '0';
+                    resW <= '1';	
+                    Fset <= p;	
+                    
+                    Asrc2 <= "000";	
+                    --Ssrc  <= "00";
+                    opcode_out <= instr(24 downto 21);
+    ---------------------------------------------------------------------------
+                when wrRF =>
+                    n_s <= fetch;
+                                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    -- AW    <= '0'; 
+                    -- BW    <= '0';
 
+                    -- Fset <= '0';
+                    RW   <=  p ; -- output from Bctrl.
+                    -- MR   <= '1';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    -- Asrc1<= '0';	  
+                    M2R  <= '0';
+                    resW <= '0';
+                    Fset <= '0';	    
+                    -- Rsrc <= '0';		   
+                    -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
+                    
+                    -- Asrc2 <= "001";	Ssrc  <= "00";
+
+
+    -------------------------------------------------------------------------------           
+                when addr =>
+                    if(instr(20)='0') then n_s <= wrM;
+                    else n_s <= rdM;
+                    end if;
+                                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    AW    <= '0'; 
+                    BW    <= '0';
+
+                    -- Fset <= '0';
+                    -- RW   <= '0';
+                    -- MR   <= '1';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    Asrc1<= '1';	  
+                    -- M2R  <= '0';	    
+                    Rsrc <= '1';
+                    Rsrc1 <= '0';		   
+                    -- Bsrc <= '0';
+                    
+                    resW <= '1';
+                    
+                    Asrc2 <= "010";	Ssrc  <= "00";
+
+                    if(instr(25) = '1') then
+                        --reg offset
+                        rsrc <= '1';
+                        SW   <= '1';
+                        Fsrc <= '1';
+                    else
+                        --immed offset.
+                    end if;
+                    
+    -------------------------------------------------------------------------------            
+                when wrM =>
+                    n_s <= fetch;
+                                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    -- AW    <= '0'; 
+                    -- BW    <= '0';
+
+                    -- Fset <= '0';
+                    -- RW   <= '0';
+                    -- MR   <= '1';
+                    MW   <= p;
+                    IorD <= '1';	
+                    -- Asrc1<= '0';	  
+                    -- M2R  <= '0';	    
+                    -- Rsrc <= '0';		   
+                    -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
+                    
+                    -- Asrc2 <= "001";	Ssrc  <= "00";
                 
-                -- RW   <= '0';
-                -- MR   <= '1';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                Asrc1<= '1';	  
-                -- M2R  <= '0';	    
-                -- Rsrc <= '0';
-                resW <= '1';	
-                Fset <= p;	
+                when rdM => 
+                    n_s <=  M2RF;
+                                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    -- AW    <= '0'; 
+                    -- BW    <= '0';
+
+                    -- Fset <= '0';
+                    -- RW   <= '0';
+                    -- MR   <= '1';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    -- Asrc1<= '0';	  
+                    -- M2R  <= '0';	    
+                    -- Rsrc <= '0';		   
+                    -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
+
+                    DW <= '1';
+                    MR <= '1';
+                    IorD <= '1';
+                    
+                    --Asrc2 <= "001";	Ssrc  <= "00";  
                 
-                Asrc2 <= "000";	
-                --Ssrc  <= "00";
-                opcode_out <= instr(24 downto 21);
----------------------------------------------------------------------------
-            when wrRF =>
-                n_s <= fetch;
+                when M2RF => 
+                    n_s <=  fetch; 
+                                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    -- AW    <= '0'; 
+                    -- BW    <= '0';
+
+                    -- Fset <= '0';
+                    RW   <= p;
+                    -- MR   <= '1';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    -- Asrc1<= '0';	  
+                    M2R  <= '1';	    
+                    -- Rsrc <= '0';		   
+                    -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
+                    
+                    -- Asrc2 <= "001";	Ssrc  <= "00";
                                 
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                -- AW    <= '0'; 
-                -- BW    <= '0';
+                when brn => 
+                    n_s <=  fetch;
+                    
+                    -- PW    <= '1'; 	
+                    -- IW    <= '1';
+                    -- DW    <= '0';
+                    AW    <= '0'; 
+                    BW    <= '0';
 
-                -- Fset <= '0';
-                RW   <=  p ; -- output from Bctrl.
-                -- MR   <= '1';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                -- Asrc1<= '0';	  
-                M2R  <= '0';
-                resW <= '0';
-                Fset <= '0';	    
-                -- Rsrc <= '0';		   
-                -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
+                    -- Fset <= '0';
+                    -- RW   <= '0';
+                    -- MR   <= '1';
+                    -- MW   <= '0';
+                    -- IorD <= '0';	
+                    -- Asrc1<= '1';	  
+                    -- M2R  <= '0';	    
+                    -- Rsrc <= '0';		   
+                    -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
+                    Asrc1 <= '0';
+                    PW <= p;
+                    opcode_out <= "0100"; --ADD
+                    
+                    Asrc2 <= "011";
+                    mOpc <= "000";
+
+                    --	Ssrc  <= "00";
+
+                when mul =>
+                    --n_s <= ;
+                    Rsrc1 <= '1';
+
                 
-                -- Asrc2 <= "001";	Ssrc  <= "00";
 
+            end case;
 
- -------------------------------------------------------------------------------           
-            when addr =>
-                if(instr(20)='0') then n_s <= wrM;
-                else n_s <= rdM;
-                end if;
-                                
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                AW    <= '0'; 
-                BW    <= '0';
-
-                -- Fset <= '0';
-                -- RW   <= '0';
-                -- MR   <= '1';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                Asrc1<= '1';	  
-                -- M2R  <= '0';	    
-                Rsrc <= '1';
-                Rsrc1 <= '0';		   
-                -- Bsrc <= '0';
-                
-                resW <= '1';
-                
-                Asrc2 <= "010";	Ssrc  <= "00";
-
-                if(instr(25) = '1') then
-                    --reg offset
-                    rsrc <= '1';
-                    SW   <= '1';
-                    Fsrc <= '1';
-                else
-                    --immed offset.
-                end if;
-                
--------------------------------------------------------------------------------            
-            when wrM =>
-                n_s <= fetch;
-                                
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                -- AW    <= '0'; 
-                -- BW    <= '0';
-
-                -- Fset <= '0';
-                -- RW   <= '0';
-                -- MR   <= '1';
-                MW   <= p;
-                IorD <= '1';	
-                -- Asrc1<= '0';	  
-                -- M2R  <= '0';	    
-                -- Rsrc <= '0';		   
-                -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
-                
-                -- Asrc2 <= "001";	Ssrc  <= "00";
-            
-            when rdM => 
-                n_s <=  M2RF;
-                                
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                -- AW    <= '0'; 
-                -- BW    <= '0';
-
-                -- Fset <= '0';
-                -- RW   <= '0';
-                -- MR   <= '1';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                -- Asrc1<= '0';	  
-                -- M2R  <= '0';	    
-                -- Rsrc <= '0';		   
-                -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
-
-                DW <= '1';
-                MR <= '1';
-                IorD <= '1';
-                
-                --Asrc2 <= "001";	Ssrc  <= "00";  
-            
-            when M2RF => 
-                n_s <=  fetch; 
-                                
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                -- AW    <= '0'; 
-                -- BW    <= '0';
-
-                -- Fset <= '0';
-                RW   <= p;
-                -- MR   <= '1';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                -- Asrc1<= '0';	  
-                M2R  <= '1';	    
-                -- Rsrc <= '0';		   
-                -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
-                
-                -- Asrc2 <= "001";	Ssrc  <= "00";
-                            
-            when brn => 
-                n_s <=  fetch;
-                
-                -- PW    <= '1'; 	
-                -- IW    <= '1';
-                -- DW    <= '0';
-                AW    <= '0'; 
-                BW    <= '0';
-
-                -- Fset <= '0';
-                -- RW   <= '0';
-                -- MR   <= '1';
-                -- MW   <= '0';
-                -- IorD <= '0';	
-                -- Asrc1<= '1';	  
-                -- M2R  <= '0';	    
-                -- Rsrc <= '0';		   
-                -- SW   <= '0';    Bsrc  <= '0';    rsrc  <= '0';
-                Asrc1 <= '0';
-                PW <= p;
-                opcode_out <= "0100"; --ADD
-                
-                Asrc2 <= "011";
-                mOpc <= "000";
-
-                --	Ssrc  <= "00";
-
-            when mul =>
-                --n_s <= ;
-                Rsrc1 <= '1';
-
-        end case;
+        end if;
     end process;
 end behavioural;
 
