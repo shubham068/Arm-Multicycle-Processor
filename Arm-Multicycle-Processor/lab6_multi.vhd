@@ -8,8 +8,8 @@ entity Controller is
 		instr: in std_logic_vector(31 downto 0);
         flag_in: in std_logic_vector(3 downto 0);
  
-        PW,IorD,MR,MW,IW,DW,M2R,Rsrc,RW,AW,BW,SW,Asrc1,Fset,resW,reset, Fsrc, Bsrc,Rsrc1:out STD_LOGIC;
-        clk:in std_logic;
+        PW,IorD,MR,MW,IW,DW,M2R,Rsrc,RW,AW,BW,SW,Asrc1,Fset,resW, Fsrc, Bsrc,Rsrc1:out STD_LOGIC;
+        clk,reset:in std_logic;
    
         
         --Fsrc=Flag source, 1 for shifter and multiplier, 0 for ALU 
