@@ -8,7 +8,7 @@ entity Controller is
 		instr: in std_logic_vector(31 downto 0);
         flag_in: in std_logic_vector(3 downto 0);
  
-        PW,IorD,MR,MW,IW,DW,M2R,Rsrc,RW,AW,BW,SW,Asrc1,Fset,resW, Fsrc, Bsrc,Rsrc1:out STD_LOGIC;
+        Wsrc,PW,IorD,MR,MW,IW,DW,M2R,Rsrc,RW,AW,BW,SW,Asrc1,Fset,resW, Fsrc, Bsrc,Rsrc1:out STD_LOGIC;
         clk,reset:in std_logic;
    
         
@@ -81,7 +81,7 @@ architecture behavioural of Controller is
                         DW    <= '0';
                         AW    <= '0'; 
                         BW    <= '0';
-        
+                        Wsrc <= '0';
                         Fset <= '0';
                         RW   <= '0';
                         MR   <= '1';
@@ -223,7 +223,8 @@ architecture behavioural of Controller is
                             n_s <= rdM;
                             IorD <='1';
                         end if;
-                                        
+                        ResW <=instr(21);
+                        Wsrc<='1';               
                         -- PW    <= '1'; 	
                         -- IW    <= '1';
                         -- DW    <= '0';
@@ -257,8 +258,12 @@ architecture behavioural of Controller is
         -------------------------------------------------------------------------------            
                     when wrM1 =>
                                 n_s <= wrM2;
+                                ResW<='0';
+                                RW <= instr(21);
                     when wrM2 =>
                                 n_s <= fetch;
+                                RW<='0';
+                                Wsrc<='0';                                
                     when wrM =>
                         n_s <= wrM1;
                                         
@@ -282,8 +287,12 @@ architecture behavioural of Controller is
                         -- Asrc2 <= "001";	Ssrc  <= "00";
                     when rdM1 => 
                         n_s <=  rdM2;
+                        ResW<='0';
+                        RW <= instr(21);
                     when rdM2 => 
                         n_s <=  M2RF;
+                        RW<='0';
+                        Wsrc<='0';
                     when rdM => 
                         n_s <=  rdM1;
                                         
@@ -294,7 +303,8 @@ architecture behavioural of Controller is
                         -- BW    <= '0';
         
                         -- Fset <= '0';
-                        -- RW   <= '0';
+                        -- RW   <= instr(21);
+                        ResW <=instr(21);
                         -- MR   <= '1';
                         -- MW   <= '0';
                         -- IorD <= '0';	
